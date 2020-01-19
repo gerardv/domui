@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -197,6 +198,10 @@ final public class PoolManager {
 	public ConnectionPool definePool(final PoolConfigSource cs, final String id) throws SQLException {
 		PoolConfig pc = new PoolConfig(id, cs);
 		return definePool(id, pc);
+	}
+
+	public ConnectionPool definePool(Properties properties, String id) throws Exception {
+		return definePool(new PropertiesSource(properties), id);
 	}
 
 	public ConnectionPool definePool(final String id, final String driver, final String url, final String userid, final String password, final String driverpath) throws SQLException {

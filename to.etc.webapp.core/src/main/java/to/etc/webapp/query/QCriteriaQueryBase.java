@@ -24,6 +24,7 @@
  */
 package to.etc.webapp.query;
 
+import kotlin.reflect.KClass;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import to.etc.webapp.ProgrammerErrorException;
@@ -69,6 +70,10 @@ public class QCriteriaQueryBase<T, R extends QCriteriaQueryBase<T, R>> extends Q
 	private Map<String, QFetchStrategy> m_fetchMap = Collections.EMPTY_MAP;
 
 	protected QCriteriaQueryBase(@NonNull Class<T> clz) {
+		super(clz, QOperation.AND);
+	}
+
+	protected QCriteriaQueryBase(@NonNull KClass<T> clz) {
 		super(clz, QOperation.AND);
 	}
 

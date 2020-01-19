@@ -27,6 +27,8 @@ package to.etc.webapp.query;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import to.etc.webapp.annotations.GProperty;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -62,6 +64,15 @@ abstract public class QRestrictor<T, R extends QRestrictor<T, R>> {
 		m_combinator = combinator;
 		m_metaTable = null;
 	}
+
+	protected QRestrictor(@NonNull KClass<T> baseClass, @NonNull QOperation combinator) {
+		Class<T> jc = JvmClassMappingKt.getJavaClass(baseClass);
+		m_baseClass = jc;
+		m_returnClass = jc;
+		m_combinator = combinator;
+		m_metaTable = null;
+	}
+
 
 	protected QRestrictor(@NonNull ICriteriaTableDef<T> meta, @NonNull QOperation combinator) {
 		m_metaTable = meta;

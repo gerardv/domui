@@ -24,6 +24,7 @@
  */
 package to.etc.webapp.query;
 
+import kotlin.reflect.KClass;
 import org.eclipse.jdt.annotation.NonNull;
 import to.etc.webapp.annotations.GProperty;
 
@@ -45,6 +46,10 @@ public class QCriteria<T> extends QCriteriaQueryBase<T, QCriteria<T>> {
 		super(b);
 	}
 
+	protected QCriteria(@NonNull KClass<T> b) {
+		super(b);
+	}
+
 	private QCriteria(@NonNull final ICriteriaTableDef<T> td) {
 		super(td);
 	}
@@ -56,6 +61,10 @@ public class QCriteria<T> extends QCriteriaQueryBase<T, QCriteria<T>> {
 	@NonNull
 	static public <U> QCriteria<U> create(@NonNull final Class<U> clz) {
 		return new QCriteria<>(clz);
+	}
+
+	static public <U> QCriteria<U> create(@NonNull KClass<U> kclz) {
+		return new QCriteria<U>(kclz);
 	}
 
 	/**
