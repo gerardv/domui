@@ -21,4 +21,13 @@ public interface IImportColumn {
 	@Nullable Integer asInteger();
 
 	@Nullable BigDecimal getDecimal();
+
+	@Nullable
+	default String getStringValueStripped() {
+		String v = getStringValue();
+		if(null == v)
+			return v;
+		v = v.trim();
+		return v.length() == 0 ? null : v;
+	}
 }
