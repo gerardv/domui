@@ -26,7 +26,7 @@ package to.etc.domui.state;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
-import to.etc.domui.component.delayed.AsyncContainer;
+import to.etc.domui.component.delayed.IAsyncContainer;
 import to.etc.domui.component.delayed.IAsyncListener;
 import to.etc.domui.dom.html.NodeBase;
 import to.etc.domui.dom.html.NodeContainer;
@@ -291,7 +291,7 @@ public class ConversationContext extends AbstractConversationContext implements 
 		return m_pageMap.get(clz.getName());
 	}
 
-	public void internalRegisterPage(@NonNull final Page p, @NonNull final IPageParameters papa) {
+	public void internalRegisterPage(@NonNull Page p, @NonNull IPageParameters papa) {
 		m_pageMap.put(p.getBody().getClass().getName(), p);
 		p.internalInitialize(papa, this);
 	}
@@ -361,7 +361,7 @@ public class ConversationContext extends AbstractConversationContext implements 
 	 * Schedule an activity to be started later. This calls the {@link IAsyncListener#onActivityScheduled(IAsyncRunnable)} method of
 	 * all listeners, and stores their "keep object" for later use.
 	 */
-	public DelayedActivityInfo scheduleDelayed(@NonNull final AsyncContainer container, @NonNull final IAsyncRunnable a) throws Exception {
+	public DelayedActivityInfo scheduleDelayed(@NonNull IAsyncContainer container, @NonNull final IAsyncRunnable a) throws Exception {
 		return getDelayedActivitiesManager().schedule(a, container);
 	}
 

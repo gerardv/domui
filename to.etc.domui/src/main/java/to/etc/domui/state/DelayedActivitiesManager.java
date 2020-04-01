@@ -30,11 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import to.etc.domui.component.delayed.AsyncContainer;
 import to.etc.domui.component.delayed.IActivity;
-import to.etc.parallelrunner.IAsyncRunnable;
+import to.etc.domui.component.delayed.IAsyncContainer;
 import to.etc.domui.dom.html.NodeBase;
 import to.etc.domui.dom.html.NodeContainer;
 import to.etc.domui.dom.html.Page;
 import to.etc.domui.state.DelayedActivityInfo.State;
+import to.etc.parallelrunner.IAsyncRunnable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,7 +77,7 @@ final public class DelayedActivitiesManager implements Runnable {
 	 * Schedule a new activity for execution. This does not actually start the executor; it merely queues the thingy. If
 	 * the executor *is* running though it can start with the action.
 	 */
-	public DelayedActivityInfo schedule(@NonNull IAsyncRunnable a, @NonNull AsyncContainer ac) throws Exception {
+	public DelayedActivityInfo schedule(@NonNull IAsyncRunnable a, @NonNull IAsyncContainer ac) throws Exception {
 		//-- Schedule.
 		synchronized(this) {
 			for(DelayedActivityInfo tdai : m_pendingQueue) {
@@ -95,6 +96,7 @@ final public class DelayedActivitiesManager implements Runnable {
 		}
 	}
 
+	@Deprecated
 	public void cancelActivity(IActivity a) {
 		DelayedActivityInfo d = null;
 		synchronized(this) {
@@ -340,7 +342,7 @@ final public class DelayedActivitiesManager implements Runnable {
 	private void applyToTree(List<DelayedActivityInfo> infoList) throws Exception {
 		//-- Handle progress reporting
 		for(DelayedActivityInfo dai : infoList) {
-			AsyncContainer c = dai.getContainer();
+			IAsyncContainer c = dai.getContainer();
 			try {
 				c.updateProgress(dai);
 			} catch(Exception x) {

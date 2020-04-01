@@ -27,9 +27,10 @@ package to.etc.domui.state;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import to.etc.domui.component.delayed.AsyncContainer;
+import to.etc.domui.component.delayed.IAsyncContainer;
 import to.etc.domui.component.delayed.IAsyncListener;
-import to.etc.parallelrunner.IAsyncRunnable;
 import to.etc.domui.server.DomApplication;
+import to.etc.parallelrunner.IAsyncRunnable;
 import to.etc.util.Progress;
 
 import java.util.HashMap;
@@ -44,7 +45,7 @@ final public class DelayedActivityInfo {
 
 	final private DelayedActivitiesManager m_manager;
 
-	final private AsyncContainer m_container;
+	final private IAsyncContainer m_container;
 
 	final private IAsyncRunnable m_activity;
 
@@ -57,7 +58,7 @@ final public class DelayedActivityInfo {
 	@NonNull
 	final private Map<IAsyncListener< ? >, Object> m_listenerDataMap = new HashMap<IAsyncListener< ? >, Object>();
 
-	protected DelayedActivityInfo(@NonNull DelayedActivitiesManager manager, @NonNull IAsyncRunnable activity, @NonNull AsyncContainer ac) {
+	protected DelayedActivityInfo(@NonNull DelayedActivitiesManager manager, @NonNull IAsyncRunnable activity, @NonNull IAsyncContainer ac) {
 		m_activity = activity;
 		m_manager = manager;
 		m_container = ac;
@@ -102,7 +103,7 @@ final public class DelayedActivityInfo {
 		m_manager.cancelActivity(this);
 	}
 
-	public AsyncContainer getContainer() {
+	public IAsyncContainer getContainer() {
 		return m_container;
 	}
 

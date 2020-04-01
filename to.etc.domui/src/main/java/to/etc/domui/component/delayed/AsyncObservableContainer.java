@@ -24,10 +24,10 @@
  */
 package to.etc.domui.component.delayed;
 
+import io.reactivex.rxjava3.core.Observable;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import to.etc.domui.component.buttons.DefaultButton;
-import to.etc.domui.component.misc.MsgBox;
 import to.etc.domui.dom.css.DisplayType;
 import to.etc.domui.dom.html.Div;
 import to.etc.domui.dom.html.Img;
@@ -38,9 +38,12 @@ import to.etc.domui.util.Msgs;
 import to.etc.parallelrunner.IAsyncCompletionListener;
 import to.etc.parallelrunner.IAsyncRunnable;
 import to.etc.util.Progress;
-import to.etc.util.StringTool;
 
-final public class AsyncContainer extends Div implements IAsyncContainer {
+/**
+ * A DomUI container (node) that embeds a task producing output to an Observable.
+ *
+ */
+final public class AsyncObservableContainer<T> extends Div implements IAsyncContainer {
 	@NonNull
 	final private IAsyncRunnable m_runnable;
 
@@ -61,69 +64,27 @@ final public class AsyncContainer extends Div implements IAsyncContainer {
 	 */
 	private String m_busyMarkerSrc = "THEME/asy-container-busy.gif";
 
-	public AsyncContainer(@NonNull IAsyncRunnable arunnable) {
+	public AsyncObservableContainer(@NonNull IAsyncRunnable arunnable) {
 		this(arunnable, null);
 	}
 
-	public AsyncContainer(@NonNull IAsyncRunnable arunnable, @Nullable IAsyncCompletionListener listener) {
+	public AsyncObservableContainer(@NonNull IAsyncRunnable arunnable, @Nullable IAsyncCompletionListener listener) {
 		m_runnable = arunnable;
 		m_resultListener = listener;
 	}
 
-	public AsyncContainer inline() {
+	public AsyncObservableContainer<T> inline() {
 		setDisplay(DisplayType.INLINE_BLOCK);
 		setAbortable(false);
 		setBusyMarkerSrc("THEME/io-blk-wait.gif");
 		return this;
 	}
 
-	@Deprecated
-	public AsyncContainer(@NonNull IActivity activity) {
-		Div[] resultLocator = new Div[1];
+	public Observable<T> observe() {
+		throw new IllegalStateException();
 
-		m_runnable = new IAsyncRunnable() {
-			@Nullable
-			private Div m_result;
 
-			@Override
-			public void run(@NonNull Progress p) throws Exception {
-				setResult(activity.run(p));
-			}
 
-			private synchronized void setResult(Div result) {
-				resultLocator[0] = result;
-			}
-		};
-
-		m_resultListener = new IAsyncCompletionListener() {
-			@Override public void onCompleted(boolean cancelled, @Nullable Exception errorException) throws Exception {
-				//-- If we've got an exception replace the contents with the exception message.
-				if(errorException != null) {
-					errorException.printStackTrace();
-					StringBuilder sb = new StringBuilder(8192);
-					StringTool.strStacktrace(sb, errorException);
-					String s = sb.toString();
-					s = s.replace("\n", "<br/>\n");
-
-					MsgBox.error(AsyncContainer.this.getParent(), "Exception while creating result for asynchronous task:<br/>" + s);
-					return;
-				}
-
-				//-- If there is no result- either we were cancelled OR there are no results..
-				Div res = resultLocator[0];
-				if(res == null) {
-					if(cancelled) {
-						setText(Msgs.BUNDLE.getString(Msgs.ASYNC_CONTAINER_CANCELLED_MSG));
-					} else {
-						setText(Msgs.BUNDLE.getString(Msgs.ASYNC_CONTAINER_NO_RESULTS_MSG));
-					}
-					return;
-				}
-
-				//-- Now replace AsyncContainer with the result
-				replaceWith(res); 					// Replace this node with another one.
-			}
-		};
 	}
 
 	@Override

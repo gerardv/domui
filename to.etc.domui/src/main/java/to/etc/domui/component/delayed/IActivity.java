@@ -29,12 +29,15 @@ import to.etc.domui.dom.html.Div;
 import to.etc.util.Progress;
 
 /**
+ * <b>DEPRECATED- use IAsyncRunnable or better the AsyncObservableContainer.</b>
+ *
  * The worker code for a delayed activity, i.e. a thingy registered using an
  * AsyncContainer.
  *
  * @author <a href="mailto:jal@etc.to">Frits Jalvingh</a>
  * Created on Oct 7, 2008
  */
+@Deprecated
 public interface IActivity {
 	Div run(@NonNull Progress p) throws Exception;
 }

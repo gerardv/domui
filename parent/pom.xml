@@ -201,6 +201,13 @@
                 <version>2.10.3</version>
             </dependency>
 
+            <!-- rxjava support (experimental) -->
+            <dependency>
+                <groupId>io.reactivex.rxjava3</groupId>
+                <artifactId>rxjava</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
