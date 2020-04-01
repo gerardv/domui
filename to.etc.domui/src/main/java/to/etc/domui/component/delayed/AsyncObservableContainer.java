@@ -25,32 +25,37 @@
 package to.etc.domui.component.delayed;
 
 import io.reactivex.rxjava3.core.Observable;
-import org.eclipse.jdt.annotation.NonNull;
+import io.reactivex.rxjava3.core.ObservableEmitter;
 import org.eclipse.jdt.annotation.Nullable;
 import to.etc.domui.component.buttons.DefaultButton;
 import to.etc.domui.dom.css.DisplayType;
 import to.etc.domui.dom.html.Div;
 import to.etc.domui.dom.html.Img;
+import to.etc.domui.rxjava.PageScheduler;
 import to.etc.domui.state.DelayedActivityInfo;
 import to.etc.domui.state.DelayedActivityInfo.State;
 import to.etc.domui.themes.Theme;
 import to.etc.domui.util.Msgs;
-import to.etc.parallelrunner.IAsyncCompletionListener;
-import to.etc.parallelrunner.IAsyncRunnable;
 import to.etc.util.Progress;
 
 /**
- * A DomUI container (node) that embeds a task producing output to an Observable.
- *
+ * A DomUI container (node) that embeds a task producing output to an Observable. The
+ * events on the Observable are scheduled on a DomUI page event, so that the observers
+ * can directly change page structures.
  */
 final public class AsyncObservableContainer<T> extends Div implements IAsyncContainer {
-	@NonNull
-	final private IAsyncRunnable m_runnable;
+	private DelayedActivityInfo m_scheduledActivity;
 
 	@Nullable
-	final private IAsyncCompletionListener m_resultListener;
+	private IAsyncObservableRunnable<T> m_runnable;
 
-	private DelayedActivityInfo m_scheduledActivity;
+	private ObservableEmitter<T> m_emitter;
+
+	private enum RunState {
+		NONE, STARTED, FINISHED, FAILED
+	}
+
+	private RunState m_runState = RunState.NONE;
 
 	private Div m_progress;
 
@@ -64,13 +69,8 @@ final public class AsyncObservableContainer<T> extends Div implements IAsyncCont
 	 */
 	private String m_busyMarkerSrc = "THEME/asy-container-busy.gif";
 
-	public AsyncObservableContainer(@NonNull IAsyncRunnable arunnable) {
-		this(arunnable, null);
-	}
 
-	public AsyncObservableContainer(@NonNull IAsyncRunnable arunnable, @Nullable IAsyncCompletionListener listener) {
-		m_runnable = arunnable;
-		m_resultListener = listener;
+	public AsyncObservableContainer() {
 	}
 
 	public AsyncObservableContainer<T> inline() {
@@ -80,19 +80,30 @@ final public class AsyncObservableContainer<T> extends Div implements IAsyncCont
 		return this;
 	}
 
-	public Observable<T> observe() {
-		throw new IllegalStateException();
+	public Observable<T> run(IAsyncObservableRunnable<T> aor) {
+		if(m_runState != RunState.NONE)
+			throw new IllegalStateException("This container has already been used to run a task");
 
+		Observable<T> obs = Observable.<T>create(a -> {
+			if(m_runState != RunState.NONE)
+				throw new IllegalStateException("This container has already been used to run a task");
+			if(m_emitter != null) {
+				a.onError(new IllegalStateException("Observable already created"));
+			} else {
+				m_emitter = a;
+				m_runnable = aor;
+			}
+			if(isBuilt()) {
+				startRunnable();
+			}
+		}).observeOn(PageScheduler.on(this))
+		;
 
-
+		return obs;
 	}
 
 	@Override
 	public void createContent() throws Exception {
-		if(m_scheduledActivity == null) {
-			m_scheduledActivity = getPage().getConversation().scheduleDelayed(this, m_runnable);
-		}
-
 		//-- Render a thingy containing a spinner
 		setCssClass("ui-asc");
 		Img img = new Img();
@@ -107,6 +118,31 @@ final public class AsyncObservableContainer<T> extends Div implements IAsyncCont
 			});
 			add(db);
 		}
+		startRunnable();
+	}
+
+	private void startRunnable() throws Exception {
+		if(m_runState != RunState.NONE)
+			return;
+		IAsyncObservableRunnable<T> runnable = m_runnable;
+		ObservableEmitter<T> emitter = m_emitter;
+		if(null == runnable || null == emitter)
+			return;
+		m_runState = RunState.STARTED;
+		m_scheduledActivity = getPage().getConversation().scheduleDelayed(this, progress -> {
+			try {
+				runnable.run(emitter, progress);
+				emitter.onComplete();
+				setRunState(RunState.FINISHED);
+			} catch(Throwable thr) {
+				emitter.onError(thr);
+				setRunState(RunState.FAILED);
+			}
+		});
+	}
+
+	private synchronized void setRunState(RunState rs) {
+		m_runState = rs;
 	}
 
 	void cancel() {
@@ -115,7 +151,7 @@ final public class AsyncObservableContainer<T> extends Div implements IAsyncCont
 	}
 
 	/**
-	 * Update the progress report.
+	 * Update the progress report; called by the async handler.
 	 */
 	@Override
 	public void updateProgress(DelayedActivityInfo dai) throws Exception {
@@ -130,37 +166,20 @@ final public class AsyncObservableContainer<T> extends Div implements IAsyncCont
 			sb.append(' ');
 			String actionPath = progress.getActionPath(3);
 			sb.append(actionPath);
-
-			//if(msg != null) {
-			//	sb.append(' ');
-			//	sb.append(msg);
-			//} else {
-			//	sb.append(" " + Msgs.BUNDLE.getString(Msgs.ASYNC_CONTAINER_COMPLETE_INDICATOR));
-			//}
 			m_progress.setText(sb.toString());
 		}
 	}
 
 	private void updateCompleted(DelayedActivityInfo dai) throws Exception {
-		//-- Call the node's update handler *before* removing myself.
 		try {
-			IAsyncCompletionListener resultListener = m_resultListener;
-			if(null != resultListener)
-				resultListener.onCompleted(dai.getMonitor().isCancelled(), dai.getException());
-			else {
-				new DefaultAsyncCompletionListener(getParent()).onCompleted(dai.getMonitor().isCancelled(), dai.getException());
-			}
-			//dai.getActivity().onCompleted(dai.getMonitor().isCancelled(), dai.getException());
-		} finally {
-			try {
-				remove();								// Remove myself *after* this all.
-			} catch(Exception x) {
-				System.err.println("Could not remove AsyncContainer: " + x);
-				x.printStackTrace();
-			}
+			remove();								// Remove myself *after* this all.
+		} catch(Exception x) {
+			System.err.println("Could not remove AsyncContainer: " + x);
+			x.printStackTrace();
 		}
 	}
 
+	@Override
 	public void confirmCancelled() {
 		setText(Msgs.BUNDLE.getString(Msgs.ASYNC_CONTAINER_CANCELLED));
 	}

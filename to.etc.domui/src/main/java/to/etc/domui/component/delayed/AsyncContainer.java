@@ -200,6 +200,7 @@ final public class AsyncContainer extends Div implements IAsyncContainer {
 		}
 	}
 
+	@Override
 	public void confirmCancelled() {
 		setText(Msgs.BUNDLE.getString(Msgs.ASYNC_CONTAINER_CANCELLED));
 	}
